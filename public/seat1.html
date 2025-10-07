@@ -83,15 +83,30 @@
     async function updateStatus() {
       const res = await fetch('/status');
       const data = await res.json();
-      const seat = data[seatId];
+      const seat = data.seats[seatId];
+      const currentUser = data.currentUser;
+      const currentSeat = data.currentSeat;
+
       document.getElementById('seatStatus').innerText = seat.status;
 
+      const loginBox = document.getElementById('loginBox');
+      const controlBox = document.getElementById('controlBox');
+      const message = document.getElementById('message');
+
       if (seat.status === 'vacant') {
-        document.getElementById('loginBox').style.display = 'block';
-        document.getElementById('controlBox').style.display = 'none';
+        loginBox.style.display = 'block';
+        controlBox.style.display = 'none';
+        message.innerText = '';
+      } else if (seat.user === currentUser && seatId === currentSeat) {
+        // ✅ This user owns this seat
+        loginBox.style.display = 'none';
+        controlBox.style.display = 'block';
+        message.innerText = `Logged in as ${seat.user}`;
       } else {
-        document.getElementById('loginBox').style.display = 'none';
-        document.getElementById('controlBox').style.display = 'block';
+        // ❌ Someone else is sitting here
+        loginBox.style.display = 'none';
+        controlBox.style.display = 'none';
+        message.innerText = `Seat occupied by ${seat.user}`;
       }
     }
 
@@ -136,6 +151,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
