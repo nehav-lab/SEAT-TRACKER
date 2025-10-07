@@ -157,10 +157,15 @@ app.get('/status', (req, res) => {
   const seats = readSeats();
   res.json(seats);
 });
+// ✅ Serve display.html as homepage
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'display.html'));
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Server running at http://localhost:${PORT}`);
 });
+
 
 
 
