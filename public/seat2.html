@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seat 2 — Login</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f6f8;
+      text-align: center;
+      margin: 0;
+      padding-top: 80px;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #000;
+      margin-bottom: 10px;
+    }
+    #status {
+      font-size: 1.1rem;
+      margin-bottom: 25px;
+      color: #333;
+    }
+    input {
+      display: block;
+      width: 250px;
+      margin: 10px auto;
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background: #eef2f7;
+    }
+    button {
+      background-color: #f4f4f4;
+      color: #000;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      padding: 8px 18px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background-color: #e0e0e0; }
+    a {
+      display: block;
+      margin-top: 20px;
+      color: purple;
+      text-decoration: underline;
+      font-size: 0.95rem;
+    }
+    #message {
+      margin-top: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Seat 2 — Login</h1>
+  <div id="status">Current status: <span id="seatStatus">vacant</span></div>
+
+  <div id="loginBox">
+    <input type="text" id="username" placeholder="Enter username" />
+    <input type="password" id="password" placeholder="Enter password" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div id="controlBox" style="display:none;">
+    <button onclick="setBreak(5)">Take 5-min Break</button>
+    <button onclick="setBreak(10)">Take 10-min Break</button>
+    <button onclick="logout()">Logout / Free Seat</button>
+  </div>
+
+  <a href="/display.html">Open public library map</a>
+  <div id="message"></div>
+
+  <script>
+    const seatId = "seat2";
+
+    async function updateStatus() {
+      const res = await fetch('/status');
+      const data = await res.json();
+      const seat = data[seatId];
+      document.getElementById('seatStatus').innerText = seat.status;
+
+      if (seat.status === 'vacant') {
+        document.getElementById('loginBox').style.display = 'block';
+        document.getElementById('controlBox').style.display = 'none';
+      } else {
+        document.getElementById('loginBox').style.display = 'none';
+        document.getElementById('controlBox').style.display = 'block';
+      }
+    }
+
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      const res = await fetch("/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seatId, username, password })
+      });
+      const data = await res.json();
+      document.getElementById("message").innerText = data.message;
+      updateStatus();
+    }
+
+    async function logout() {
+      const res = await fetch("/logout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seatId })
+      });
+      const data = await res.json();
+      document.getElementById("message").innerText = data.message;
+      updateStatus();
+    }
+
+    async function setBreak(minutes) {
+      const res = await fetch("/break", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seatId, minutes })
+      });
+      const data = await res.json();
+      document.getElementById("message").innerText = data.message;
+      updateStatus();
+    }
+
+    updateStatus();
+    setInterval(updateStatus, 3000);
+  </script>
+</body>
+</html>

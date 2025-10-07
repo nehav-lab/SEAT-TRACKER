@@ -1,0 +1,12 @@
+{
+  "seat1": {
+    "status": "occupied",
+    "user": "student",
+    "break_until": null
+  },
+  "seat2": {
+    "status": "occupied",
+    "user": "admin",
+    "break_until": null
+  }
+}
