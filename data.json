@@ -1,12 +1,12 @@
 {
   "seat1": {
-    "status": "occupied",
-    "user": "student",
+    "status": "vacant",
+    "user": null,
     "break_until": null
   },
   "seat2": {
-    "status": "occupied",
-    "user": "admin",
+    "status": "vacant",
+    "user": null,
     "break_until": null
   }
 }
