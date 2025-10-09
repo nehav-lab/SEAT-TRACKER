@@ -2,154 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Seat 2 — Login</title>
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #f4f6f8;
-      text-align: center;
-      margin: 0;
-      padding-top: 80px;
-    }
-    h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #000;
-      margin-bottom: 10px;
-    }
-    #status {
-      font-size: 1.1rem;
-      margin-bottom: 25px;
-      color: #333;
-    }
-    input {
-      display: block;
-      width: 250px;
-      margin: 10px auto;
-      padding: 10px;
-      font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      background: #eef2f7;
-    }
-    button {
-      background-color: #f4f4f4;
-      color: #000;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      padding: 8px 18px;
-      font-size: 1rem;
-      cursor: pointer;
-      margin: 5px;
-    }
-    button:hover { background-color: #e0e0e0; }
-    a {
-      display: block;
-      margin-top: 20px;
-      color: purple;
-      text-decoration: underline;
-      font-size: 0.95rem;
-    }
-    #message {
-      margin-top: 15px;
-      font-weight: 600;
-      color: #333;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background: #f6f7f9; }
+    input { padding: 10px; margin: 5px; border: 1px solid #ccc; border-radius: 5px; }
+    button { padding: 10px 15px; margin: 5px; border: 1px solid #444; background: #f9f9f9; cursor: pointer; }
+    button:hover { background: #ddd; }
   </style>
 </head>
 <body>
   <h1>Seat 2 — Login</h1>
-  <div id="status">Current status: <span id="seatStatus">vacant</span></div>
+  <p id="status">Current status: checking...</p>
 
-  <div id="loginBox">
-    <input type="text" id="username" placeholder="Enter username" />
-    <input type="password" id="password" placeholder="Enter password" />
+  <div id="login-section">
+    <input type="text" id="username" placeholder="username" />
+    <input type="password" id="password" placeholder="password" />
     <button onclick="login()">Login</button>
   </div>
 
-  <div id="controlBox" style="display:none;">
-    <button onclick="setBreak(5)">Take 5-min Break</button>
-    <button onclick="setBreak(10)">Take 10-min Break</button>
+  <div id="controls" style="display: none;">
+    <button onclick="takeBreak(5)">Take 5-min Break</button>
+    <button onclick="takeBreak(10)">Take 10-min Break</button>
     <button onclick="logout()">Logout / Free Seat</button>
   </div>
 
-  <a href="/display.html">Open public library map</a>
-  <div id="message"></div>
+  <p><a href="display.html">Open public library map</a></p>
+  <p id="message"></p>
 
   <script>
     const seatId = "seat2";
 
-    async function updateStatus() {
+    async function getStatus() {
       const res = await fetch('/status');
       const data = await res.json();
-      const seat = data.seats[seatId];
-      const currentUser = data.currentUser;
-      const currentSeat = data.currentSeat;
-
-      document.getElementById('seatStatus').innerText = seat.status;
-
-      const loginBox = document.getElementById('loginBox');
-      const controlBox = document.getElementById('controlBox');
-      const message = document.getElementById('message');
-
-      if (seat.status === 'vacant') {
-        loginBox.style.display = 'block';
-        controlBox.style.display = 'none';
-        message.innerText = '';
-      } else if (seat.user === currentUser && seatId === currentSeat) {
-        // ✅ This user owns this seat
-        loginBox.style.display = 'none';
-        controlBox.style.display = 'block';
-        message.innerText = `Logged in as ${seat.user}`;
+      const seat = data[seatId];
+      document.getElementById('status').innerText = `Current status: ${seat.status}`;
+      
+      if (seat.status === 'occupied' || seat.status === 'break') {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('controls').style.display = 'block';
       } else {
-        // ❌ Someone else is sitting here
-        loginBox.style.display = 'none';
-        controlBox.style.display = 'none';
-        message.innerText = `Seat occupied by ${seat.user}`;
+        document.getElementById('login-section').style.display = 'block';
+        document.getElementById('controls').style.display = 'none';
       }
     }
 
     async function login() {
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-      const res = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seatId, username, password })
       });
       const data = await res.json();
-      document.getElementById("message").innerText = data.message;
-      updateStatus();
+      document.getElementById('message').innerText = data.message;
+      getStatus();
     }
 
     async function logout() {
-      const res = await fetch("/logout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seatId })
       });
       const data = await res.json();
-      document.getElementById("message").innerText = data.message;
-      updateStatus();
+      document.getElementById('message').innerText = data.message;
+      getStatus();
     }
 
-    async function setBreak(minutes) {
-      const res = await fetch("/break", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+    async function takeBreak(minutes) {
+      const res = await fetch('/break', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ seatId, minutes })
       });
       const data = await res.json();
-      document.getElementById("message").innerText = data.message;
-      updateStatus();
+      document.getElementById('message').innerText = data.message;
+      getStatus();
     }
 
-    updateStatus();
-    setInterval(updateStatus, 3000);
+    setInterval(getStatus, 2000);
+    getStatus();
   </script>
 </body>
 </html>
+
+
 
 
