@@ -82,7 +82,7 @@ app.post('/break', (req, res) => {
     return res.status(400).json({ success: false, message: 'Invalid seat ID' });
   }
 
-  // Allow ESP trigger even if seat vacant
+  // Allow ESP trigger even if vacant
   if (seats[seatId].status === 'break') {
     return res.json({ success: false, message: 'Seat already on break.' });
   }
@@ -111,6 +111,34 @@ app.post('/break', (req, res) => {
   return res.json({ success: true, message: `Break started for ${minutes} minutes.` });
 });
 
+// ===== UPDATE SEAT STATUS (ESP sends occupancy) =====
+app.post('/update-seat', (req, res) => {
+  const { seatId, status } = req.body;
+  const seats = readSeats();
+
+  if (!seats[seatId]) {
+    return res.status(400).json({ success: false, message: 'Invalid seat ID' });
+  }
+
+  // Map colors → statuses
+  let mappedStatus;
+  if (status === 'green') mappedStatus = 'vacant';
+  else if (status === 'orange') mappedStatus = 'occupied';
+  else if (status === 'yellow') mappedStatus = 'break';
+  else mappedStatus = 'vacant';
+
+  seats[seatId].status = mappedStatus;
+
+  // Handle user label for ESP devices
+  if (mappedStatus === 'occupied' && !seats[seatId].user)
+    seats[seatId].user = "ESP_Device";
+  if (mappedStatus === 'vacant')
+    seats[seatId].user = null;
+
+  writeSeats(seats);
+  res.json({ success: true, message: `Seat ${seatId} updated to ${mappedStatus}` });
+});
+
 // ===== FETCH STATUS =====
 app.get('/status', (req, res) => {
   const seats = readSeats();
@@ -119,6 +147,8 @@ app.get('/status', (req, res) => {
 
 // ===== SERVER START =====
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+
+
 
 
 
