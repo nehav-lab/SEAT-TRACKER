@@ -1,4 +1,3 @@
-// ===== server.js =====
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -11,15 +10,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ✅ Login credentials
+// User credentials
 const USERS = {
-  "student": "1234",
-  "admin": "5678",
-  "guest": "abcd",
-  "library": "9999"
+  student: "1234",
+  admin: "5678",
+  guest: "abcd",
+  library: "9999"
 };
 
-// ===== Utility =====
+// Helper functions
 function readSeats() {
   if (!fs.existsSync(DATA_PATH)) return {};
   return JSON.parse(fs.readFileSync(DATA_PATH, 'utf8'));
@@ -28,7 +27,7 @@ function writeSeats(data) {
   fs.writeFileSync(DATA_PATH, JSON.stringify(data, null, 2));
 }
 
-// Initialize
+// Initialize if missing
 if (!fs.existsSync(DATA_PATH)) {
   writeSeats({
     seat1: { status: 'vacant', user: null, break_until: null },
@@ -36,41 +35,45 @@ if (!fs.existsSync(DATA_PATH)) {
   });
 }
 
-// ===== LOGIN =====
+// LOGIN
 app.post('/login', (req, res) => {
   const { seatId, username, password } = req.body;
   const seats = readSeats();
 
-  if (!USERS[username] || USERS[username] !== password)
+  if (!USERS[username] || USERS[username] !== password) {
     return res.json({ success: false, message: 'Invalid credentials' });
+  }
 
   const alreadyLoggedIn = Object.values(seats).find(s => s.user === username);
-  if (alreadyLoggedIn)
+  if (alreadyLoggedIn) {
     return res.json({ success: false, message: 'User already logged in on another seat' });
+  }
 
-  if (seats[seatId].status !== 'vacant')
+  if (seats[seatId].status !== 'vacant') {
     return res.json({ success: false, message: 'Seat already occupied' });
+  }
 
   seats[seatId] = { status: 'occupied', user: username, break_until: null };
   writeSeats(seats);
-  res.json({ success: true, message: 'Login successful' });
+  return res.json({ success: true, message: 'Login successful' });
 });
 
-// ===== LOGOUT =====
+// LOGOUT
 app.post('/logout', (req, res) => {
   const { seatId } = req.body;
   const seats = readSeats();
+  if (!seats[seatId]) return res.json({ success: false, message: 'Invalid seat ID' });
 
   seats[seatId] = { status: 'vacant', user: null, break_until: null };
   writeSeats(seats);
-  console.log(`✅ ${seatId} logged out.`);
   res.json({ success: true, message: `${seatId} logged out` });
 });
 
-// ===== BREAK =====
+// BREAK (ESP or user)
 app.post('/break', (req, res) => {
   const { seatId, minutes } = req.body;
   const seats = readSeats();
+  if (!seats[seatId]) return res.status(400).json({ success: false, message: 'Invalid seat ID' });
 
   const now = Date.now();
   const duration = Number(minutes) * 60 * 1000;
@@ -81,47 +84,53 @@ app.post('/break', (req, res) => {
   setTimeout(() => {
     const current = readSeats();
     const seat = current[seatId];
-    if (seat.status === 'break' && Date.now() >= seat.break_until) {
+    if (seat && seat.status === 'break' && Date.now() >= seat.break_until) {
       seat.status = seat.user ? 'occupied' : 'vacant';
       seat.break_until = null;
       writeSeats(current);
     }
   }, duration + 1000);
 
-  res.json({ success: true });
+  return res.json({ success: true, message: `Break started for ${minutes} minutes.` });
 });
 
-// ===== ESP UPDATE (FSR + touch sensors) =====
+// ESP STATUS UPDATE
 app.post('/update-seat', (req, res) => {
   const { seatId, status } = req.body;
   const seats = readSeats();
+  if (!seats[seatId]) return res.status(400).json({ success: false, message: 'Invalid seat ID' });
 
-  if (!seats[seatId])
-    return res.status(400).json({ success: false, message: 'Invalid seat ID' });
+  if (status === 'green') {
+    seats[seatId].status = 'vacant';
+    seats[seatId].user = null;
+  } else if (status === 'orange') {
+    seats[seatId].status = 'occupied';
+    seats[seatId].user = "Guest";
+  } else if (status === 'yellow') {
+    seats[seatId].status = 'break';
+  }
 
-  seats[seatId].status = status; // "green", "yellow", "orange"
   writeSeats(seats);
-
-  console.log(`📡 ${seatId} updated from ESP: ${status}`);
   res.json({ success: true });
 });
 
-// ===== STATUS =====
+// STATUS (for display page)
 app.get('/status', (req, res) => {
   res.json(readSeats());
 });
 
-// ===== RESET =====
+// RESET (debug)
 app.post('/reset', (req, res) => {
   writeSeats({
     seat1: { status: 'vacant', user: null, break_until: null },
     seat2: { status: 'vacant', user: null, break_until: null }
   });
-  console.log("🔄 All seats reset.");
-  res.json({ success: true });
+  res.json({ success: true, message: 'All seats reset' });
 });
 
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+
+
 
 
 
