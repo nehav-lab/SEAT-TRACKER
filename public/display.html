@@ -1,187 +1,182 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smart Library Seat Display</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LibNex Live Seat Status</title>
 
-<style>
-  /* ===== Background Animation ===== */
-  body {
-    background: linear-gradient(-45deg, #1e3c72, #2a5298, #1c92d2, #f2fcfe);
-    background-size: 400% 400%;
-    animation: bgMove 10s ease infinite;
-    font-family: "Poppins", sans-serif;
-    text-align: center;
-    color: white;
-    overflow: hidden;
-  }
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: radial-gradient(circle at top, #021b3a, #000000);
+      color: white;
+      text-align: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
 
-  @keyframes bgMove {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-  }
+    h1 {
+      font-size: 2.8rem;
+      margin-top: 30px;
+      color: #6cb4ff;
+      text-shadow: 0 0 20px rgba(108, 180, 255, 0.8);
+    }
 
-  /* ===== Title ===== */
-  h1 {
-    margin-top: 25px;
-    font-size: 2.3em;
-    text-shadow: 0 0 15px cyan;
-    animation: fadeIn 1.5s ease;
-  }
+    h3 {
+      font-weight: 400;
+      color: #66ccff;
+      margin-top: -10px;
+    }
 
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+    .container {
+      display: flex;
+      justify-content: center;
+      gap: 50px;
+      margin-top: 60px;
+      flex-wrap: wrap;
+    }
 
-  /* ===== Legend ===== */
-  .legend {
-    display: flex;
-    justify-content: center;
-    gap: 25px;
-    margin-top: 15px;
-    flex-wrap: wrap;
-  }
-  .legend div {
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-weight: bold;
-    color: white;
-  }
-  .vacant { background: #27ae60; }
-  .occupied { background: #e67e22; }
-  .break { background: #f1c40f; color: black; }
+    .seat {
+      width: 300px;
+      height: 280px;
+      border-radius: 20px;
+      background: rgba(0, 30, 60, 0.8);
+      box-shadow: 0 0 20px rgba(0, 255, 255, 0.2);
+      transition: all 0.4s ease;
+      cursor: pointer;
+      padding-top: 30px;
+    }
 
-  /* ===== Status Bar ===== */
-  .status-bar {
-    margin-top: 25px;
-    font-size: 1.3em;
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-  }
-  .status-bar span {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: bold;
-  }
-  .status-vacant { background: #27ae60; }
-  .status-occupied { background: #e67e22; }
-  .status-break { background: #f1c40f; color: #000; }
+    .seat:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 35px rgba(0, 255, 255, 0.6);
+    }
 
-  /* ===== Seats Container ===== */
-  .container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 70px;
-    margin-top: 50px;
-    flex-wrap: wrap;
-  }
+    .seat h2 {
+      color: #ffffff;
+      margin-bottom: 10px;
+    }
 
-  /* ===== Seat Styles ===== */
-  .seat {
-    width: 180px;
-    height: 180px;
-    border-radius: 25px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: 600;
-    font-size: 1.3em;
-    color: white;
-    transition: background 0.6s ease, transform 0.3s ease, box-shadow 0.3s ease;
-  }
+    .status {
+      font-size: 1.2rem;
+      margin-top: 20px;
+      font-weight: bold;
+    }
 
-  .green { background: #27ae60; box-shadow: 0 0 20px #27ae60; }
-  .orange { background: #e67e22; animation: pulse 1.5s infinite; }
-  .yellow { background: #f1c40f; color: #000; animation: blink 1s infinite; }
+    .vacant {
+      color: #2ecc71;
+      text-shadow: 0 0 10px #2ecc71;
+    }
 
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); box-shadow: 0 0 20px #e67e22; }
-    50% { transform: scale(1.1); box-shadow: 0 0 30px #ffae42; }
-  }
+    .occupied {
+      color: #ff4d4d;
+      text-shadow: 0 0 10px #ff4d4d;
+    }
 
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; }
-  }
+    .break {
+      color: #ffcc00;
+      text-shadow: 0 0 10px #ffcc00;
+    }
 
-  .pop {
-    transform: scale(1.1);
-  }
-</style>
+    footer {
+      margin-top: 60px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 15px;
+      display: flex;
+      justify-content: center;
+      gap: 80px;
+      font-size: 1.1rem;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .count {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .count.vacant { color: #2ecc71; }
+    .count.occupied { color: #ff4d4d; }
+    .count.break { color: #ffcc00; }
+
+  </style>
 </head>
-
 <body>
-  <h1>📚 Smart Library Seat Display</h1>
+  <h1>LibNex Live Seat Status</h1>
+  <h3>Smart Library Seat Occupancy System – MIT Manipal</h3>
 
-  <div class="legend">
-    <div class="vacant">Vacant (Green)</div>
-    <div class="occupied">Occupied (Orange)</div>
-    <div class="break">Break (Yellow)</div>
-  </div>
-
-  <!-- ===== STATUS BAR ===== -->
-  <div class="status-bar">
-    <span class="status-vacant">Vacant: <b id="vacantCount">0</b></span>
-    <span class="status-occupied">Occupied: <b id="occupiedCount">0</b></span>
-    <span class="status-break">Break: <b id="breakCount">0</b></span>
-  </div>
-
-  <!-- ===== SEATS ===== -->
   <div class="container">
-    <div id="seat1" class="seat green">Seat 1</div>
-    <div id="seat2" class="seat green">Seat 2</div>
+    <div class="seat" id="seat1" onclick="window.location.href='seat1.html'">
+      <h2>Seat 1</h2>
+      <div class="status" id="seat1Status">Loading...</div>
+    </div>
+
+    <div class="seat" id="seat2" onclick="window.location.href='seat2.html'">
+      <h2>Seat 2</h2>
+      <div class="status" id="seat2Status">Loading...</div>
+    </div>
   </div>
 
-<script>
-  async function updateSeats() {
-    try {
-      const res = await fetch('/status');
-      const data = await res.json();
+  <footer>
+    <div class="stat">
+      <div class="count vacant" id="vacantCount">0</div>
+      <div>Vacant</div>
+    </div>
+    <div class="stat">
+      <div class="count occupied" id="occupiedCount">0</div>
+      <div>Occupied</div>
+    </div>
+    <div class="stat">
+      <div class="count break" id="breakCount">0</div>
+      <div>Break</div>
+    </div>
+  </footer>
 
-      let vacant = 0, occupied = 0, onBreak = 0;
+  <script>
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/status');
+        const seats = await res.json();
 
-      for (const [id, seat] of Object.entries(data)) {
-        const el = document.getElementById(id);
+        let vacant = 0, occupied = 0, onbreak = 0;
 
-        if (seat.status === 'vacant' || seat.status === 'green') {
-          el.className = 'seat green';
-          vacant++;
-        } else if (seat.status === 'occupied' || seat.status === 'orange') {
-          el.className = 'seat orange';
-          occupied++;
-        } else if (seat.status === 'break' || seat.status === 'yellow') {
-          el.className = 'seat yellow';
-          onBreak++;
+        for (const [seatId, info] of Object.entries(seats)) {
+          const seatEl = document.getElementById(seatId + "Status");
+
+          if (info.status === "vacant") {
+            seatEl.textContent = "Vacant";
+            seatEl.className = "status vacant";
+            vacant++;
+          } else if (info.status === "occupied") {
+            seatEl.textContent = "Occupied (" + (info.user || "Guest") + ")";
+            seatEl.className = "status occupied";
+            occupied++;
+          } else if (info.status === "break") {
+            seatEl.textContent = "Break Time";
+            seatEl.className = "status break";
+            onbreak++;
+          }
         }
 
-        el.textContent = `${id.replace('seat', 'Seat ')} ${seat.user ? '(' + seat.user + ')' : ''}`;
-        
-        // Small "pop" animation each update
-        el.classList.add('pop');
-        setTimeout(() => el.classList.remove('pop'), 200);
+        document.getElementById("vacantCount").textContent = vacant;
+        document.getElementById("occupiedCount").textContent = occupied;
+        document.getElementById("breakCount").textContent = onbreak;
+      } catch (err) {
+        console.error("Error fetching status:", err);
       }
-
-      // Update counts in status bar
-      document.getElementById('vacantCount').textContent = vacant;
-      document.getElementById('occupiedCount').textContent = occupied;
-      document.getElementById('breakCount').textContent = onBreak;
-
-    } catch (error) {
-      console.error('Error fetching seat data:', error);
     }
-  }
 
-  setInterval(updateSeats, 1500);
-  updateSeats();
-</script>
-
+    setInterval(fetchStatus, 2000);
+    fetchStatus();
+  </script>
 </body>
 </html>
+
+
 
 
 
