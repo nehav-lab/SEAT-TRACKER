@@ -53,24 +53,20 @@ app.post('/login', (req, res) => {
     return res.json({ success: false, message: 'User already logged in on another seat' });
   }
 
-  // 🟩 New condition: Only allow login if seat is occupied (sensor triggered)
+  // ✅ NEW: Allow login only if seat is physically occupied (orange)
   if (seats[seatId].status === 'vacant') {
-    return res.json({ success: false, message: 'Seat is vacant — please sit first.' });
+    return res.json({ success: false, message: 'Seat is vacant. Please occupy before login.' });
   }
 
-  // 🟧 If seat is occupied but not logged in (orange), allow login
-  if (seats[seatId].status === 'occupied' && !seats[seatId].user) {
-    seats[seatId].user = username;
-    writeSeats(seats);
-    return res.json({ success: true, message: 'Login successful' });
-  }
-
-  // 🟥 If seat is already occupied AND someone is logged in
+  // If seat already logged in
   if (seats[seatId].status === 'occupied' && seats[seatId].user) {
-    return res.json({ success: false, message: 'Seat already occupied by another user.' });
+    return res.json({ success: false, message: 'Seat already logged in.' });
   }
 
-  return res.json({ success: false, message: 'Unable to login. Try again.' });
+  // ✅ Login success
+  seats[seatId] = { status: 'occupied', user: username, break_until: null };
+  writeSeats(seats);
+  return res.json({ success: true, message: 'Login successful' });
 });
 
 // ===== LOGOUT =====
@@ -82,8 +78,7 @@ app.post('/logout', (req, res) => {
     return res.json({ success: false, message: 'Invalid seat ID' });
   }
 
-  // 🟧 Only logout user; ESP will handle seat vacancy automatically
-  seats[seatId].user = null;
+  seats[seatId] = { status: 'vacant', user: null, break_until: null };
   writeSeats(seats);
 
   console.log(`✅ ${seatId} has been logged out.`);
@@ -132,10 +127,11 @@ app.post('/update-seat', (req, res) => {
   const existingUser = seats[seatId].user;
   const existingBreak = seats[seatId].break_until;
 
-  // 🟧 Update logic — if seat becomes vacant, auto logout
+  // ✅ Auto logout if seat becomes vacant
   if (status === 'vacant') {
     seats[seatId] = { status: 'vacant', user: null, break_until: null };
   } else {
+    // otherwise, just update occupancy (orange or occupied)
     seats[seatId].status = status;
     seats[seatId].user = existingUser;
     seats[seatId].break_until = existingBreak;
@@ -163,6 +159,8 @@ app.post('/reset', (req, res) => {
 
 // ===== START SERVER =====
 app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+
+
 
 
 
