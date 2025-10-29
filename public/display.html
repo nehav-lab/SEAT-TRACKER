@@ -1,56 +1,189 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Library Seat Display</title>
-  <style>
-    body { background: #f7f8fa; font-family: Arial, sans-serif; text-align: center; }
-    h1 { font-size: 2.2em; margin-top: 30px; }
-    .legend { display: flex; justify-content: center; gap: 20px; margin: 20px 0; }
-    .legend div { padding: 10px 15px; border-radius: 8px; color: white; font-weight: bold; }
-    .vacant { background: #28a745; }
-    .occupied { background: #c0392b; }
-    .break { background: #f1c40f; color: #000; }
-    .not-logged { background: #e67e22; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Library Seat Display</title>
 
-    .seats { display: flex; justify-content: center; gap: 50px; margin-top: 30px; }
-    .seat { width: 200px; height: 200px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center; align-items: center; font-weight: bold; font-size: 1.3em; color: white; }
-    .green { background: #28a745; }
-    .yellow { background: #f1c40f; color: #000; }
-    .orange { background: #e67e22; }
-  </style>
+<style>
+  /* ===== Background Animation ===== */
+  body {
+    background: linear-gradient(-45deg, #1e3c72, #2a5298, #1c92d2, #f2fcfe);
+    background-size: 400% 400%;
+    animation: bgMove 10s ease infinite;
+    font-family: "Poppins", sans-serif;
+    text-align: center;
+    color: white;
+    overflow: hidden;
+  }
+
+  @keyframes bgMove {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ===== Title ===== */
+  h1 {
+    margin-top: 25px;
+    font-size: 2.3em;
+    text-shadow: 0 0 15px cyan;
+    animation: fadeIn 1.5s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ===== Legend ===== */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 25px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+  }
+  .legend div {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white;
+  }
+  .vacant { background: #27ae60; }
+  .occupied { background: #e67e22; }
+  .break { background: #f1c40f; color: black; }
+
+  /* ===== Status Bar ===== */
+  .status-bar {
+    margin-top: 25px;
+    font-size: 1.3em;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+  }
+  .status-bar span {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: bold;
+  }
+  .status-vacant { background: #27ae60; }
+  .status-occupied { background: #e67e22; }
+  .status-break { background: #f1c40f; color: #000; }
+
+  /* ===== Seats Container ===== */
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 70px;
+    margin-top: 50px;
+    flex-wrap: wrap;
+  }
+
+  /* ===== Seat Styles ===== */
+  .seat {
+    width: 180px;
+    height: 180px;
+    border-radius: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    font-size: 1.3em;
+    color: white;
+    transition: background 0.6s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .green { background: #27ae60; box-shadow: 0 0 20px #27ae60; }
+  .orange { background: #e67e22; animation: pulse 1.5s infinite; }
+  .yellow { background: #f1c40f; color: #000; animation: blink 1s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 20px #e67e22; }
+    50% { transform: scale(1.1); box-shadow: 0 0 30px #ffae42; }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+
+  .pop {
+    transform: scale(1.1);
+  }
+</style>
 </head>
-<body>
-  <h1>Library Seat Display</h1>
-  <div class="legend">
-    <div class="vacant">Vacant</div>
-    <div class="occupied">Occupied (logged in)</div>
-    <div class="break">Breaktime</div>
-    <div class="not-logged">Occupied (not logged in)</div>
-  </div>
-  <div class="seats">
-    <a href="seat1.html"><div id="seat1" class="seat green">Seat 1</div></a>
-    <a href="seat2.html"><div id="seat2" class="seat green">Seat 2</div></a>
-  </div>
-  <p>Scan the QR on a seat to login or check seat page.</p>
 
-  <script>
-    async function updateSeats() {
+<body>
+  <h1>📚 Smart Library Seat Display</h1>
+
+  <div class="legend">
+    <div class="vacant">Vacant (Green)</div>
+    <div class="occupied">Occupied (Orange)</div>
+    <div class="break">Break (Yellow)</div>
+  </div>
+
+  <!-- ===== STATUS BAR ===== -->
+  <div class="status-bar">
+    <span class="status-vacant">Vacant: <b id="vacantCount">0</b></span>
+    <span class="status-occupied">Occupied: <b id="occupiedCount">0</b></span>
+    <span class="status-break">Break: <b id="breakCount">0</b></span>
+  </div>
+
+  <!-- ===== SEATS ===== -->
+  <div class="container">
+    <div id="seat1" class="seat green">Seat 1</div>
+    <div id="seat2" class="seat green">Seat 2</div>
+  </div>
+
+<script>
+  async function updateSeats() {
+    try {
       const res = await fetch('/status');
       const data = await res.json();
 
+      let vacant = 0, occupied = 0, onBreak = 0;
+
       for (const [id, seat] of Object.entries(data)) {
         const el = document.getElementById(id);
-        el.className = `seat ${seat.status}`;
-        el.textContent = `${id.replace('seat', 'Seat ')} ${seat.user ? seat.user : ''}`;
-      }
-    }
 
-    setInterval(updateSeats, 1500);
-    updateSeats();
-  </script>
+        if (seat.status === 'vacant' || seat.status === 'green') {
+          el.className = 'seat green';
+          vacant++;
+        } else if (seat.status === 'occupied' || seat.status === 'orange') {
+          el.className = 'seat orange';
+          occupied++;
+        } else if (seat.status === 'break' || seat.status === 'yellow') {
+          el.className = 'seat yellow';
+          onBreak++;
+        }
+
+        el.textContent = `${id.replace('seat', 'Seat ')} ${seat.user ? '(' + seat.user + ')' : ''}`;
+        
+        // Small "pop" animation each update
+        el.classList.add('pop');
+        setTimeout(() => el.classList.remove('pop'), 200);
+      }
+
+      // Update counts in status bar
+      document.getElementById('vacantCount').textContent = vacant;
+      document.getElementById('occupiedCount').textContent = occupied;
+      document.getElementById('breakCount').textContent = onBreak;
+
+    } catch (error) {
+      console.error('Error fetching seat data:', error);
+    }
+  }
+
+  setInterval(updateSeats, 1500);
+  updateSeats();
+</script>
+
 </body>
 </html>
+
+
 
 
 
