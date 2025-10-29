@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LibNex Seat Display</title>
+  <title>Library Seat Display</title>
   <style>
     body {
       font-family: "Poppins", sans-serif;
@@ -16,17 +16,18 @@
 
     h1 {
       margin-top: 30px;
-      font-size: 2.6em;
+      font-size: 2.5em;
       color: #00bfff;
-      text-shadow: 0 0 12px #00bfff;
+      text-shadow: 0 0 10px #00bfff;
     }
 
-    h2.subtitle {
-      font-size: 1.1em;
-      color: #b0e8ff;
-      margin-top: 6px;
-      font-weight: 500;
-      letter-spacing: 0.5px;
+    /* ✅ Subheading style */
+    h3 {
+      font-size: 1.2em;
+      font-weight: 400;
+      color: #66ccff;
+      margin-top: 8px;
+      text-shadow: 0 0 10px rgba(0, 191, 255, 0.6);
     }
 
     .status-bar {
@@ -64,10 +65,6 @@
       cursor: pointer;
     }
 
-    .seat:hover {
-      transform: scale(1.03);
-    }
-
     .vacant { background: #2ecc71; box-shadow: 0 0 30px #2ecc71; }
     .occupied { background: #e74c3c; box-shadow: 0 0 30px #e74c3c; }
     .occupied-not-login { background: #e67e22; box-shadow: 0 0 30px #e67e22; }
@@ -90,13 +87,20 @@
       font-weight: bold;
     }
 
+    .footer {
+      margin-top: 40px;
+      color: #aaa;
+      font-size: 0.9em;
+    }
+
+    /* Occupancy Bar */
     .occupancy-bar {
       margin-top: 50px;
       display: flex;
       justify-content: center;
-      gap: 50px;
+      gap: 60px;
       background: rgba(255, 255, 255, 0.05);
-      padding: 15px 0;
+      padding: 20px;
       border-radius: 15px;
       width: 80%;
       margin-left: auto;
@@ -109,30 +113,19 @@
 
     .occupancy-box h2 {
       margin: 0;
-      font-size: 1.8em;
+      font-size: 2em;
     }
 
     .occupancy-box p {
-      margin: 5px 0 0;
-      color: #d7eaff;
+      margin: 0;
+      color: #ccc;
     }
-
-    .count.total { color: #ffffff; }
-    .count.vacant { color: #2ecc71; }
-    .count.occupied { color: #e74c3c; }
-    .count.break { color: #f1c40f; }
-
-    .footer {
-      margin-top: 40px;
-      color: #aaa;
-      font-size: 0.9em;
-    }
-
   </style>
 </head>
 <body>
-  <h1>LibNex</h1>
-  <h2 class="subtitle">Smart Library Seat Occupancy System – Synchron'25 MIT Manipal</h2>
+  <h1>LibNex Live Seat Status</h1>
+  <!-- ✅ Subheading added below main title -->
+  <h3>Smart Library Seat Occupancy System – Synchron'25 MIT Manipal</h3>
 
   <div class="status-bar">
     <div class="status-box">🟩 Vacant</div>
@@ -153,21 +146,22 @@
     </div>
   </div>
 
+  <!-- Occupancy summary bar -->
   <div class="occupancy-bar">
     <div class="occupancy-box">
-      <h2 class="count total" id="totalCount">0</h2>
+      <h2 id="total">0</h2>
       <p>Total</p>
     </div>
     <div class="occupancy-box">
-      <h2 class="count vacant" id="vacantCount">0</h2>
+      <h2 id="vacant">0</h2>
       <p>Vacant</p>
     </div>
     <div class="occupancy-box">
-      <h2 class="count occupied" id="occupiedCount">0</h2>
+      <h2 id="occupied">0</h2>
       <p>Occupied</p>
     </div>
     <div class="occupancy-box">
-      <h2 class="count break" id="breakCount">0</h2>
+      <h2 id="break">0</h2>
       <p>Break</p>
     </div>
   </div>
@@ -175,22 +169,20 @@
   <div class="footer">Smart Library System © MIT Manipal</div>
 
   <script>
-    function openSeatPage(page) {
-      window.location.href = page;
-    }
-
     async function fetchStatus() {
       try {
         const res = await fetch("/status");
         const data = await res.json();
 
-        let total = 0, vacant = 0, occupied = 0, breakCount = 0;
+        let total = 0, vacant = 0, occupied = 0, breakSeats = 0;
 
         for (const seatId of Object.keys(data)) {
           total++;
           const seat = document.getElementById(seatId);
           const statusText = seat.querySelector(".status-text");
+
           const { status, user, break_until } = data[seatId];
+          let remaining = "";
 
           if (status === "vacant") {
             seat.className = "seat vacant";
@@ -206,7 +198,8 @@
             occupied++;
           } else if (status === "break") {
             seat.className = "seat break";
-            let remaining = "";
+            breakSeats++;
+
             if (break_until) {
               const diff = Math.max(0, Math.floor((break_until - Date.now()) / 1000));
               const m = String(Math.floor(diff / 60)).padStart(2, "0");
@@ -214,25 +207,31 @@
               remaining = `${m}:${s}`;
             }
             statusText.innerHTML = `Break Time<br><span class="break-timer">⏳ ${remaining}</span>`;
-            breakCount++;
           }
         }
 
-        document.getElementById("totalCount").textContent = total;
-        document.getElementById("vacantCount").textContent = vacant;
-        document.getElementById("occupiedCount").textContent = occupied;
-        document.getElementById("breakCount").textContent = breakCount;
+        // Update occupancy bar
+        document.getElementById("total").textContent = total;
+        document.getElementById("vacant").textContent = vacant;
+        document.getElementById("occupied").textContent = occupied;
+        document.getElementById("break").textContent = breakSeats;
 
       } catch (err) {
         console.error("Error fetching status:", err);
       }
     }
 
+    function openSeatPage(page) {
+      window.location.href = page;
+    }
+
+    // Refresh every 2 seconds
     setInterval(fetchStatus, 2000);
     fetchStatus();
   </script>
 </body>
 </html>
+
 
 
 
