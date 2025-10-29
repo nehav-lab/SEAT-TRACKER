@@ -84,6 +84,34 @@
       font-size: 0.9em;
     }
 
+    /* Occupancy Bar */
+    .occupancy-bar {
+      margin-top: 50px;
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 15px;
+      width: 80%;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .occupancy-box {
+      text-align: center;
+    }
+
+    .occupancy-box h2 {
+      margin: 0;
+      font-size: 2em;
+    }
+
+    .occupancy-box p {
+      margin: 0;
+      color: #ccc;
+    }
+
   </style>
 </head>
 <body>
@@ -108,6 +136,26 @@
     </div>
   </div>
 
+  <!-- Occupancy summary bar -->
+  <div class="occupancy-bar">
+    <div class="occupancy-box">
+      <h2 id="total">0</h2>
+      <p>Total</p>
+    </div>
+    <div class="occupancy-box">
+      <h2 id="vacant">0</h2>
+      <p>Vacant</p>
+    </div>
+    <div class="occupancy-box">
+      <h2 id="occupied">0</h2>
+      <p>Occupied</p>
+    </div>
+    <div class="occupancy-box">
+      <h2 id="break">0</h2>
+      <p>Break</p>
+    </div>
+  </div>
+
   <div class="footer">Smart Library System © MIT Manipal</div>
 
   <script>
@@ -116,7 +164,10 @@
         const res = await fetch("/status");
         const data = await res.json();
 
+        let total = 0, vacant = 0, occupied = 0, breakSeats = 0;
+
         for (const seatId of Object.keys(data)) {
+          total++;
           const seat = document.getElementById(seatId);
           const statusText = seat.querySelector(".status-text");
 
@@ -126,14 +177,19 @@
           if (status === "vacant") {
             seat.className = "seat vacant";
             statusText.textContent = "Vacant";
+            vacant++;
           } else if (status === "occupied" && user) {
             seat.className = "seat occupied";
             statusText.textContent = `Occupied (${user})`;
+            occupied++;
           } else if (status === "occupied" && !user) {
             seat.className = "seat occupied-not-login";
             statusText.textContent = "Occupied (No Login)";
+            occupied++;
           } else if (status === "break") {
             seat.className = "seat break";
+            breakSeats++;
+
             if (break_until) {
               const diff = Math.max(0, Math.floor((break_until - Date.now()) / 1000));
               const m = String(Math.floor(diff / 60)).padStart(2, "0");
@@ -143,6 +199,13 @@
             statusText.innerHTML = `Break Time<br><span class="break-timer">⏳ ${remaining}</span>`;
           }
         }
+
+        // Update occupancy bar
+        document.getElementById("total").textContent = total;
+        document.getElementById("vacant").textContent = vacant;
+        document.getElementById("occupied").textContent = occupied;
+        document.getElementById("break").textContent = breakSeats;
+
       } catch (err) {
         console.error("Error fetching status:", err);
       }
@@ -158,6 +221,8 @@
   </script>
 </body>
 </html>
+
+
 
 
 
